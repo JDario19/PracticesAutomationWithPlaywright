@@ -5,54 +5,75 @@ jobs:
     docker:
       - image: cimg/node:20.11
     parallelism: 3
-    working_directory: ~/project
     steps:
       - checkout
 
+      # 1) Detectar carpeta del package.json (ignorando node_modules) y exportarla
       - run:
-          name: Debug repo tree
+          name: Detect package.json folder
           command: |
-            pwd
-            node -v
-            npm -v
-            ls -la
-            echo "Searching for package.json recursively..."
-            find . -maxdepth 3 -name package.json -print
+            set -e
+            echo "Buscando package.json..."
+            PKGJSON_PATH=$(find . -path "./node_modules" -prune -o -maxdepth 3 -name package.json -print | head -n1)
+            if [ -z "$PKGJSON_PATH" ]; then
+              echo "No se encontró package.json en el repo (maxdepth 3)."
+              exit 1
+            fi
+            PKGDIR=$(dirname "$PKGJSON_PATH")
+            echo "Encontrado en: $PKGDIR"
+            echo "export PKGDIR=$PKGDIR" >> "$BASH_ENV"
 
-      - restore_cache:
-          keys:
-            - v1-npm-deps-{{ checksum "package-lock.json" }}
-            - v1-npm-deps-
       - run:
-          name: Install deps
-          command: npm ci
-      - save_cache:
-          key: v1-npm-deps-{{ checksum "package-lock.json" }}
-          paths:
-            - ~/.npm
-            - node_modules
+          name: Debug tree
+          command: |
+            source "$BASH_ENV"
+            echo "PWD: $(pwd)"
+            echo "PKGDIR: $PKGDIR"
+            ls -la
+            ls -la "$PKGDIR"
 
+      # 2) Instalar deps en la carpeta correcta
+      - run:
+          name: Install deps (npm ci)
+          command: |
+            source "$BASH_ENV"
+            cd "$PKGDIR"
+            npm ci
+
+      # 3) Instalar navegadores Playwright (en la misma carpeta)
       - run:
           name: Install Playwright browsers
-          command: npx playwright install --with-deps
+          command: |
+            source "$BASH_ENV"
+            cd "$PKGDIR"
+            npx playwright install --with-deps
 
+      # 4) Ejecutar el shard correspondiente
       - run:
           name: Run shard
           command: |
+            source "$BASH_ENV"
+            cd "$PKGDIR"
             SHARD_INDEX=$((CIRCLE_NODE_INDEX + 1))
             TOTAL=$CIRCLE_NODE_TOTAL
             echo "Running shard $SHARD_INDEX/$TOTAL"
             npx playwright test --reporter=junit,line --shard="$SHARD_INDEX/$TOTAL"
 
+      # 5) Publicar resultados JUnit (desde PKGDIR)
       - store_test_results:
           path: test-results/junit
 
-      # Guardamos los blobs en /tmp para luego mergearlos
+      # 6) Mover blob reports de este shard a workspace para merge
       - run:
           name: Prepare blob reports per shard
           command: |
+            source "$BASH_ENV"
             mkdir -p /tmp/blob-report/${CIRCLE_NODE_INDEX}
-            if [ -d blob-report ]; then mv blob-report/* /tmp/blob-report/${CIRCLE_NODE_INDEX}/ || true; fi
+            if [ -d "$PKGDIR/blob-report" ]; then
+              mv "$PKGDIR"/blob-report/* /tmp/blob-report/${CIRCLE_NODE_INDEX}/ || true
+            else
+              echo "No blob-report folder yet (posible si no hubo pruebas)."
+            fi
 
       - persist_to_workspace:
           root: /tmp
@@ -62,27 +83,46 @@ jobs:
   merge_report:
     docker:
       - image: cimg/node:20.11
-    working_directory: ~/project
     steps:
       - checkout
       - attach_workspace:
           at: /tmp
 
-      - restore_cache:
-          keys:
-            - v1-npm-deps-{{ checksum "package-lock.json" }}
-            - v1-npm-deps-
+      # Detectar nuevamente PKGDIR (mismo mecanismo)
       - run:
-          name: Install deps
-          command: npm ci
+          name: Detect package.json folder
+          command: |
+            set -e
+            PKGJSON_PATH=$(find . -path "./node_modules" -prune -o -maxdepth 3 -name package.json -print | head -n1)
+            if [ -z "$PKGJSON_PATH" ]; then
+              echo "No se encontró package.json en el repo (maxdepth 3)."
+              exit 1
+            fi
+            PKGDIR=$(dirname "$PKGJSON_PATH")
+            echo "PKGDIR: $PKGDIR"
+            echo "export PKGDIR=$PKGDIR" >> "$BASH_ENV"
+
+      - run:
+          name: Install deps (npm ci)
+          command: |
+            source "$BASH_ENV"
+            cd "$PKGDIR"
+            npm ci
+
       - run:
           name: Install Playwright browsers
-          command: npx playwright install --with-deps
+          command: |
+            source "$BASH_ENV"
+            cd "$PKGDIR"
+            npx playwright install --with-deps
 
       - run:
           name: Merge Playwright reports
           command: |
+            source "$BASH_ENV"
+            cd "$PKGDIR"
             ls -la /tmp/blob-report || true
+            # Unir todos los blobs en un solo HTML:
             npx playwright merge-reports --reporter html /tmp/blob-report/*
 
       - store_artifacts:
