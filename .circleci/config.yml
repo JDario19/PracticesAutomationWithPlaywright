@@ -63,6 +63,13 @@ jobs:
       - checkout
       - attach_workspace:
           at: ~/project
+      - run:
+    name: Debug repo tree
+    command: |
+      pwd
+      ls -la
+      echo "Searching for package.json recursively..."
+      find . -maxdepth 3 -name package.json -print
 
       # Instalar dependencias (para tener playwright disponible en este job)
       - restore_cache:
