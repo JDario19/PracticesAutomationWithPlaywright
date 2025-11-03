@@ -9,7 +9,6 @@ jobs:
     steps:
       - checkout
 
-      # (Opcional) Diagnóstico rápido
       - run:
           name: Debug tree
           command: |
@@ -17,7 +16,6 @@ jobs:
             ls -la
             test -f package.json && echo "package.json OK" || (echo "NO package.json" && exit 1)
 
-      # Cache por lockfile
       - restore_cache:
           keys:
             - v1-npm-deps-{{ checksum "package-lock.json" }}
@@ -31,25 +29,22 @@ jobs:
             - ~/.npm
             - node_modules
 
-      # Navegadores Playwright (con deps del SO)
       - run:
           name: Install Playwright browsers
           command: npx playwright install --with-deps
 
-      # Ejecutar shard correspondiente a este contenedor
+      # ⬇️ No sobreescribimos reporters (o usa --reporter=junit,line,blob)
       - run:
           name: Run shard
           command: |
             SHARD_INDEX=$((CIRCLE_NODE_INDEX + 1))
             TOTAL=$CIRCLE_NODE_TOTAL
             echo "Running shard $SHARD_INDEX/$TOTAL"
-            npx playwright test --reporter=junit,line --shard="$SHARD_INDEX/$TOTAL"
+            npx playwright test --shard="$SHARD_INDEX/$TOTAL"
 
-      # Publicar resultados JUnit (para Test Summary)
       - store_test_results:
           path: test-results/junit
 
-      # Mover blobs de este shard a workspace (para merge posterior)
       - run:
           name: Prepare blob for merge
           command: |
@@ -58,8 +53,7 @@ jobs:
 
       - persist_to_workspace:
           root: /tmp
-          paths:
-            - blob-report
+          paths: [ blob-report ]
 
   merge_report:
     docker:
@@ -67,10 +61,8 @@ jobs:
     working_directory: ~/project
     steps:
       - checkout
-      - attach_workspace:
-          at: /tmp
+      - attach_workspace: { at: /tmp }
 
-      # Necesitamos @playwright/test para usar `npx playwright merge-reports`
       - restore_cache:
           keys:
             - v1-npm-deps-{{ checksum "package-lock.json" }}
@@ -78,27 +70,26 @@ jobs:
       - run:
           name: Install deps
           command: npm ci
-
-      # (No es estrictamente necesario instalar browsers para merge, pero no estorba)
       - run:
           name: Install Playwright browsers
           command: npx playwright install --with-deps
 
-      # Unificar blobs de todos los shards en una sola carpeta y generar el HTML
+      # ⬇️ Consolidamos .zip y luego mergeamos
       - run:
           name: Merge Playwright reports
           command: |
             mkdir -p /tmp/merged-blobs
-            # Mueve todos los archivos blob (desde carpetas 0,1,2...) a /tmp/merged-blobs
-            find /tmp/blob-report -type f -maxdepth 2 -print -exec mv {} /tmp/merged-blobs/ \;
+            find /tmp/blob-report -maxdepth 2 -type f -name "*.zip" -print -exec mv -t /tmp/merged-blobs {} +
 
             echo "Contenido de /tmp/merged-blobs:"
             ls -la /tmp/merged-blobs || true
+            if [ -z "$(ls -A /tmp/merged-blobs 2>/dev/null)" ]; then
+              echo "No se encontraron blobs (¿se ejecutó el reporter 'blob' en los shards?)."
+              exit 1
+            fi
 
-            # Genera un solo reporte HTML
             npx playwright merge-reports --reporter html /tmp/merged-blobs
 
-      # Publicar el reporte final como artifact descargable
       - store_artifacts:
           path: playwright-report
           destination: playwright-report
@@ -108,5 +99,4 @@ workflows:
     jobs:
       - test
       - merge_report:
-          requires:
-            - test
+          requires: [ test ]
