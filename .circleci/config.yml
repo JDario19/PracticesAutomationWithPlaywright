@@ -4,12 +4,21 @@ jobs:
   test:
     docker:
       - image: cimg/node:20.11
-    parallelism: 3        # 👈 cambia este número para más/menos contenedores
+    parallelism: 3
     working_directory: ~/project
     steps:
       - checkout
 
-      # Cache por lockfile
+      - run:
+          name: Debug repo tree
+          command: |
+            pwd
+            node -v
+            npm -v
+            ls -la
+            echo "Searching for package.json recursively..."
+            find . -maxdepth 3 -name package.json -print
+
       - restore_cache:
           keys:
             - v1-npm-deps-{{ checksum "package-lock.json" }}
@@ -23,12 +32,10 @@ jobs:
             - ~/.npm
             - node_modules
 
-      # Playwright browsers + dependencias del SO
       - run:
           name: Install Playwright browsers
           command: npx playwright install --with-deps
 
-      # Ejecutar shard correspondiente a este contenedor
       - run:
           name: Run shard
           command: |
@@ -37,21 +44,18 @@ jobs:
             echo "Running shard $SHARD_INDEX/$TOTAL"
             npx playwright test --reporter=junit,line --shard="$SHARD_INDEX/$TOTAL"
 
-      # Publicar resultados JUnit (CircleCI los agrega solo)
       - store_test_results:
           path: test-results/junit
 
-      # Persistir reportes blob de cada shard al workspace para el merge
+      # Guardamos los blobs en /tmp para luego mergearlos
       - run:
           name: Prepare blob reports per shard
           command: |
-            mkdir -p blob-report/${CIRCLE_NODE_INDEX}
-            # Los reportes 'blob' se guardan por defecto en ./blob-report
-            # Movemos el contenido de este shard a una carpeta única
-            shopt -s nullglob
-            mv blob-report/* blob-report/${CIRCLE_NODE_INDEX}/ || true
+            mkdir -p /tmp/blob-report/${CIRCLE_NODE_INDEX}
+            if [ -d blob-report ]; then mv blob-report/* /tmp/blob-report/${CIRCLE_NODE_INDEX}/ || true; fi
+
       - persist_to_workspace:
-          root: .
+          root: /tmp
           paths:
             - blob-report
 
@@ -62,31 +66,25 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: ~/project
-      - run:
-    name: Debug repo tree
-    command: |
-      pwd
-      ls -la
-      echo "Searching for package.json recursively..."
-      find . -maxdepth 3 -name package.json -print
+          at: /tmp
 
-      # Instalar dependencias (para tener playwright disponible en este job)
       - restore_cache:
           keys:
             - v1-npm-deps-{{ checksum "package-lock.json" }}
             - v1-npm-deps-
-      - run: npm ci
-      - run: npx playwright install --with-deps
+      - run:
+          name: Install deps
+          command: npm ci
+      - run:
+          name: Install Playwright browsers
+          command: npx playwright install --with-deps
 
-      # Unir todos los blobs y generar reporte HTML único
       - run:
           name: Merge Playwright reports
           command: |
-            # Cada subcarpeta en blob-report/* viene de un shard
-            npx playwright merge-reports --reporter html blob-report/*
+            ls -la /tmp/blob-report || true
+            npx playwright merge-reports --reporter html /tmp/blob-report/*
 
-      # Publicar el HTML final como artifact
       - store_artifacts:
           path: playwright-report
           destination: playwright-report
@@ -94,17 +92,7 @@ jobs:
 workflows:
   test_on_push:
     jobs:
-      - test:
-          filters:
-            branches:
-              only:
-                - main
-                - /feature\/.*/
+      - test
       - merge_report:
           requires:
             - test
-          filters:
-            branches:
-              only:
-                - main
-                - /feature\/.*/
