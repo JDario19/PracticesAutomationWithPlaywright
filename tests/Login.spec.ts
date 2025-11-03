@@ -22,4 +22,12 @@ test.describe("Login Page Tests", () => {
         await expect(userLogin.LoggedAsUser).toBeVisible();
         // Add assertions here to verify successful login
     });
+
+    test("Verify login with invalid credentials", async ({ page }) => {
+        await homePage.clickSignUpLogin();
+        await homePageLogin.enterEmailAddress("invalid@testing.com");
+        await homePageLogin.enterPassword("wrongpassword");
+        await homePageLogin.clickLoginButton();
+        await expect(homePageLogin.errorMessage).toBeVisible();
+    });         
 });
