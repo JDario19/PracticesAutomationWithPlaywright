@@ -15,7 +15,7 @@ export default defineConfig({
     : [['html', { open: 'on-failure' }]],
 
   use: {
-    baseURL: process.env.BASE_URL || 'https://automationexercise.com/',
+    baseURL: process.env.BASE_URL || 'https://www.todoist.com/home',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
