@@ -14,14 +14,10 @@ export class Login{
         this.loginButton = page.getByRole('button', {name: 'Log in'});
         this.errorMessage = page.getByText("Wrong email or password.");
     }
-    async enterEmailAddres(email: string){
+    async login(email: string, password: string){
         await this.email.fill(email)
-    }
-    async enterPassword(password: string){
         await this.password.fill(password)
-    }
-    async clikcLogin(){
-        await this.loginButton.click();
+        await this.loginButton.click(); 
     }
     async expectErrorMessage(){
         await expect(this.errorMessage).toBeVisible({ timeout: 5000 });
