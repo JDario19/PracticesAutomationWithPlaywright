@@ -1,33 +1,27 @@
 import { test, expect } from "@playwright/test";
-import { HomePage } from "../Pages/HomePage";
-import { HomePageLogin } from "../Pages/HomePageLogin";
-import { UserLogin } from "../Pages/UserLogin";
+import { Login } from "../Pages/Login";
+import { MainPage } from "../Pages/MainPage";
 
-test.describe("Login Page Tests", () => {
-    let homePage;
-    let homePageLogin;
-    let userLogin;
-    test.beforeEach(async ({ page }) => {
-        homePage = new HomePage(page);
-        homePageLogin = new HomePageLogin(page);
-        userLogin = new UserLogin(page);
-        await page.goto("/");
-    });
-
-    test("Verify navigation to Login Page", async ({ page }) => {
-        await homePage.clickSignUpLogin();
-        await homePageLogin.enterEmailAddress("testing321@testing.com");
-        await homePageLogin.enterPassword("12345");
-        await homePageLogin.clickLoginButton();
-        await expect(userLogin.LoggedAsUser).toBeVisible();
-        // Add assertions here to verify successful login
-    });
-
-    test("Verify login with invalid credentials", async ({ page }) => {
-        await homePage.clickSignUpLogin();
-        await homePageLogin.enterEmailAddress("invalid@testing.com");
-        await homePageLogin.enterPassword("wrongpassword");
-        await homePageLogin.clickLoginButton();
-        await expect(homePageLogin.errorMessage).toBeVisible();
-    });         
+test.describe("Login page test", () =>{
+    let login;
+    let mainPage;
+    test.beforeEach(async ({ page }) =>{
+        login = new Login(page);
+        mainPage = new MainPage(page);
+        await page.goto('/')
+    })
+    test("Login valid credentials", async ({ page}) =>{
+        await mainPage.clickLogInHeaderLink();
+        await login.enterEmailAddres("j.monteon90@gmail.com");
+        await login.enterPassword("dario9090");
+        await login.clikcLogin();
+        await expect(page).toHaveURL('https://app.todoist.com/app/inbox');
+    })
+    test("Login invalid crecentials", async ({ page}) =>{
+        await mainPage.clickLogInHeaderLink();
+        await login.enterEmailAddres("j.monteon90@gmail.com");
+        await login.enterPassword("dario900");
+        await login.clikcLogin();
+        await login.expectErrorMessage();
+    })
 });

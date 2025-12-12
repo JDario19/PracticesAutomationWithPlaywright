@@ -1,0 +1,28 @@
+{
+  "name": "practicesautomationwithplaywright",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:ci": "playwright test --reporter=junit,line",
+    "codegen": "playwright codegen",
+    "pw:install": "playwright install --with-deps"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JDario19/PracticesAutomationWithPlaywright.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JDario19/PracticesAutomationWithPlaywright/issues"
+  },
+  "homepage": "https://github.com/JDario19/PracticesAutomationWithPlaywright#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@types/node": "^24.10.0",
+    "typescript": "^5.4.0"
+  }
+}

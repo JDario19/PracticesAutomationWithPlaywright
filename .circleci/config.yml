@@ -4,12 +4,18 @@ jobs:
   test:
     docker:
       - image: cimg/node:20.11
-    parallelism: 3        # 👈 cambia este número para más/menos contenedores
+    parallelism: 3
     working_directory: ~/project
     steps:
       - checkout
 
-      # Cache por lockfile
+      - run:
+          name: Debug tree
+          command: |
+            pwd; node -v; npm -v
+            ls -la
+            test -f package.json && echo "package.json OK" || (echo "NO package.json" && exit 1)
+
       - restore_cache:
           keys:
             - v1-npm-deps-{{ checksum "package-lock.json" }}
@@ -23,37 +29,31 @@ jobs:
             - ~/.npm
             - node_modules
 
-      # Playwright browsers + dependencias del SO
       - run:
           name: Install Playwright browsers
           command: npx playwright install --with-deps
 
-      # Ejecutar shard correspondiente a este contenedor
+      # ⬇️ No sobreescribimos reporters (o usa --reporter=junit,line,blob)
       - run:
           name: Run shard
           command: |
             SHARD_INDEX=$((CIRCLE_NODE_INDEX + 1))
             TOTAL=$CIRCLE_NODE_TOTAL
             echo "Running shard $SHARD_INDEX/$TOTAL"
-            npx playwright test --reporter=junit,line --shard="$SHARD_INDEX/$TOTAL"
+            npx playwright test --shard="$SHARD_INDEX/$TOTAL"
 
-      # Publicar resultados JUnit (CircleCI los agrega solo)
       - store_test_results:
           path: test-results/junit
 
-      # Persistir reportes blob de cada shard al workspace para el merge
       - run:
-          name: Prepare blob reports per shard
+          name: Prepare blob for merge
           command: |
-            mkdir -p blob-report/${CIRCLE_NODE_INDEX}
-            # Los reportes 'blob' se guardan por defecto en ./blob-report
-            # Movemos el contenido de este shard a una carpeta única
-            shopt -s nullglob
-            mv blob-report/* blob-report/${CIRCLE_NODE_INDEX}/ || true
+            mkdir -p /tmp/blob-report/${CIRCLE_NODE_INDEX}
+            [ -d blob-report ] && mv blob-report/* /tmp/blob-report/${CIRCLE_NODE_INDEX}/ || true
+
       - persist_to_workspace:
-          root: .
-          paths:
-            - blob-report
+          root: /tmp
+          paths: [ blob-report ]
 
   merge_report:
     docker:
@@ -61,25 +61,35 @@ jobs:
     working_directory: ~/project
     steps:
       - checkout
-      - attach_workspace:
-          at: ~/project
+      - attach_workspace: { at: /tmp }
 
-      # Instalar dependencias (para tener playwright disponible en este job)
       - restore_cache:
           keys:
             - v1-npm-deps-{{ checksum "package-lock.json" }}
             - v1-npm-deps-
-      - run: npm ci
-      - run: npx playwright install --with-deps
+      - run:
+          name: Install deps
+          command: npm ci
+      - run:
+          name: Install Playwright browsers
+          command: npx playwright install --with-deps
 
-      # Unir todos los blobs y generar reporte HTML único
+      # ⬇️ Consolidamos .zip y luego mergeamos
       - run:
           name: Merge Playwright reports
           command: |
-            # Cada subcarpeta en blob-report/* viene de un shard
-            npx playwright merge-reports --reporter html blob-report/*
+            mkdir -p /tmp/merged-blobs
+            find /tmp/blob-report -maxdepth 2 -type f -name "*.zip" -print -exec mv -t /tmp/merged-blobs {} +
 
-      # Publicar el HTML final como artifact
+            echo "Contenido de /tmp/merged-blobs:"
+            ls -la /tmp/merged-blobs || true
+            if [ -z "$(ls -A /tmp/merged-blobs 2>/dev/null)" ]; then
+              echo "No se encontraron blobs (¿se ejecutó el reporter 'blob' en los shards?)."
+              exit 1
+            fi
+
+            npx playwright merge-reports --reporter html /tmp/merged-blobs
+
       - store_artifacts:
           path: playwright-report
           destination: playwright-report
@@ -87,17 +97,6 @@ jobs:
 workflows:
   test_on_push:
     jobs:
-      - test:
-          filters:
-            branches:
-              only:
-                - main
-                - /feature\/.*/
+      - test
       - merge_report:
-          requires:
-            - test
-          filters:
-            branches:
-              only:
-                - main
-                - /feature\/.*/
+          requires: [ test ]
