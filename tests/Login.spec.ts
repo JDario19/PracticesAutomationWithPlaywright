@@ -12,16 +12,12 @@ test.describe("Login page test", () =>{
     })
     test("Login valid credentials", async ({ page}) =>{
         await mainPage.clickLogInHeaderLink();
-        await login.enterEmailAddres("j.monteon90@gmail.com");
-        await login.enterPassword("dario9090");
-        await login.clikcLogin();
+        await login.login("j.monteon90@gmail.com", "dario9090");
         await expect(page).toHaveURL('https://app.todoist.com/app/inbox');
     })
-    test("Login invalid crecentials", async ({ page}) =>{
+    test("Login invalid credentials", async ({ page}) =>{
         await mainPage.clickLogInHeaderLink();
-        await login.enterEmailAddres("j.monteon90@gmail.com");
-        await login.enterPassword("dario900");
-        await login.clikcLogin();
+        await login.login("j.monteon90@gmail.com", "dario909090");
         await login.expectErrorMessage();
     })
 });
