@@ -1,15 +1,16 @@
 import { Locator, Page, expect } from "@playwright/test";
+import { MainPageLocators } from "../PagesObjects/MainPage.locators";
 
 export class MainPage{
     readonly page: Page;
-    readonly logInHeaderLink: Locator;
+    readonly loc: MainPageLocators;
 
     constructor(page: Page){
         this.page = page;
-        this.logInHeaderLink = page.getByRole('link', {name: 'Log in'});
+        this.loc = new MainPageLocators(page);
     }
     async clickLogInHeaderLink(){
-        await expect(this.logInHeaderLink).toBeVisible({ timeout: 5000 });
-        await this.logInHeaderLink.click();
+        await expect(this.loc.logInHeaderLink).toBeVisible({ timeout: 5000 });
+        await this.loc.logInHeaderLink.click();
     }
 }
