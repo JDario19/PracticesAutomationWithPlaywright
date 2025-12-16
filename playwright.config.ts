@@ -1,4 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
+import dotenv from 'dotenv';
+dotenv.config();
+
 
 export default defineConfig({
   testDir: './tests',
@@ -9,7 +12,7 @@ export default defineConfig({
   reporter: process.env.CI
     ? [
         ['junit', { outputFile: 'test-results/junit/results.xml' }],
-        ['blob'],   // 👈 necesario para mergear reportes entre shards
+        ['blob'],
         ['line']
       ]
     : [['html', { open: 'on-failure' }]],

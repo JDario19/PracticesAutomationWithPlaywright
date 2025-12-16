@@ -1,6 +1,6 @@
 import { Page, Locator, expect } from "@playwright/test";
 
-export class Login{
+export class LoginPageLocators{
     readonly page: Page;
     readonly email: Locator;
     readonly password: Locator;
@@ -13,13 +13,5 @@ export class Login{
         this.password = page.getByRole('textbox', {name: "Password"})
         this.loginButton = page.getByRole('button', {name: 'Log in'});
         this.errorMessage = page.getByText("Wrong email or password.");
-    }
-    async login(email: string, password: string){
-        await this.email.fill(email)
-        await this.password.fill(password)
-        await this.loginButton.click(); 
-    }
-    async expectErrorMessage(){
-        await expect(this.errorMessage).toBeVisible({ timeout: 5000 });
     }
 }
