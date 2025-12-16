@@ -2,13 +2,14 @@ import { UserHomePage } from "../Pages/UserHomePage";
 import { test, expect } from "@playwright/test";
 import { LoginPage } from "../Pages/LoginPage";
 import { MainPage } from "../Pages/MainPage";
+import { getEnv } from "../utils/env";
 
 test.describe("Adding tasks", () => {
     let userHomePage;
     let login;
     let mainPage;
-    const user = process.env.QA_USER;
-    const pass = process.env.QA_PASS;
+    const user = getEnv('QA_USER');
+    const pass = getEnv('QA_PASS');
     test.beforeEach(async ({ page }) => {
         userHomePage = new UserHomePage(page);
         login = new LoginPage(page);
