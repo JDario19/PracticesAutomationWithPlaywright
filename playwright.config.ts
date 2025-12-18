@@ -2,7 +2,6 @@ import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
 dotenv.config();
 
-
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
@@ -12,14 +11,16 @@ export default defineConfig({
   reporter: process.env.CI
     ? [
         ['junit', { outputFile: 'test-results/junit/results.xml' }],
-        ['blob'],
-        ['line']
+        ['blob', { outputDir: 'blob-report' }],  // 👈 explícito para CircleCI
+        ['line'],
       ]
-    : [['html', { open: 'on-failure' }]],
+    : [
+        ['html', { open: 'on-failure' }],        // 👈 UI local con npx playwright show-report
+      ],
 
   use: {
     baseURL: process.env.BASE_URL || 'https://www.todoist.com/home',
-    trace: 'on-first-retry',
+    trace: 'on-first-retry',          // 👈 esto activa Trace Viewer en el HTML
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
   },
