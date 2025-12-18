@@ -5,9 +5,9 @@ import { MainPage } from "../Pages/MainPage";
 import { getEnv } from "../utils/env";
 
 test.describe("Adding tasks", () => {
-    let userHomePage;
-    let login;
-    let mainPage;
+    let userHomePage: UserHomePage;
+    let login: LoginPage;
+    let mainPage: MainPage;
     const user = getEnv('QA_USER');
     const pass = getEnv('QA_PASS');
     test.beforeEach(async ({ page }) => {
@@ -16,7 +16,7 @@ test.describe("Adding tasks", () => {
         mainPage = new MainPage(page);
         await page.goto('/')
     })
-    test("Add a task", async ({ page }) => {
+    test("Add a task, then delete by three dots", async ({ page }) => {
         const id = Date.now().toString();
         const taskName = `This is my first task ${id}`;
         const taskDescription = `This is the description ${id}`;
@@ -26,8 +26,10 @@ test.describe("Adding tasks", () => {
         await userHomePage.addTask(taskName, taskDescription);
 
         const idLocator = page.getByText(id).first();
-        await expect(idLocator).toBeVisible();
-
+        await expect(idLocator).toContainText(id);
+        await idLocator.hover();
+        await userHomePage.openTaskInfoById(id);
+        await userHomePage.deleteTaskById(id);
     });
 
 })

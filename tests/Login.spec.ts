@@ -5,9 +5,9 @@ import { UserHomePage } from "../Pages/UserHomePage";
 import { getEnv } from "../utils/env";
 
 test.describe("Login page test", () =>{
-    let login;
-    let mainPage;
-    let userHomePage;
+    let login: LoginPage;
+    let mainPage: MainPage;
+    let userHomePage: UserHomePage;
 
     const user = getEnv('QA_USER');
     const pass = getEnv('QA_PASS');

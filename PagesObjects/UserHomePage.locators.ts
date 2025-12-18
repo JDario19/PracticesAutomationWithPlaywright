@@ -10,6 +10,9 @@ export class UserHomePageLocators {
   readonly selectPriority1Button: Locator;
   readonly saveTaskButton: Locator;
   readonly inboxMainPage: Locator;
+  readonly infoTaskButtonTestId: string;
+  readonly deleteTaskButtonTestId: Locator;
+  readonly deleteConfirmButton: Locator;
 
   constructor(page: Page) {
     this.addTaskButton = page.getByRole('button', { name: 'Añadir tarea' }).first();
@@ -21,5 +24,8 @@ export class UserHomePageLocators {
     this.selectPriority1Button = page.getByRole('option', { name: 'Prioridad 1' });
     this.saveTaskButton = page.getByRole('button', { name: 'Añadir tarea' });
     this.inboxMainPage = page.getByRole('heading', { name: 'Bandeja de entrada' });
+    this.infoTaskButtonTestId = "more_menu";
+    this.deleteTaskButtonTestId = page.getByRole('menuitem', { name: /Eliminar/ });
+    this.deleteConfirmButton = page.getByRole('button', { name: 'Eliminar' });
   }
 }
