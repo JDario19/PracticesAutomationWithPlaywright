@@ -6,8 +6,16 @@ jobs:
       - image: cimg/node:20.11
     parallelism: 3
     working_directory: ~/project
+    environment:
+      DOTENV_DISABLE: "true"        # 👈 1) Desactiva dotenv en CI
     steps:
       - checkout
+
+      - run:
+          name: Debug env vars
+          command: |
+            echo "QA_USER: $QA_USER"
+            echo "QA_PASS: $QA_PASS"
 
       - run:
           name: Debug tree
@@ -57,6 +65,8 @@ jobs:
     docker:
       - image: cimg/node:20.11
     working_directory: ~/project
+    environment:
+      DOTENV_DISABLE: "true"        # 👈 opcional pero consistente
     steps:
       - checkout
       - attach_workspace: { at: /tmp }
@@ -95,4 +105,5 @@ workflows:
     jobs:
       - test
       - merge_report:
-          requires: [ test ]
+          requires:
+            - test
