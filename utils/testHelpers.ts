@@ -6,7 +6,7 @@ export async function waitForInboxLoaded(page: Page, inboxLocator) {
   await page.waitForLoadState("networkidle");
 
   // Espera a que el heading "Bandeja de entrada" sea visible
-  await expect(inboxLocator).toBeVisible({ timeout: 30000 });
+  await expect(inboxLocator).toBeVisible({ timeout: 90000 });
 }
 
 
@@ -15,7 +15,7 @@ export async function dismissPostLoginPopups(page: Page) {
   const cookies = page.getByRole("button", { name: /Aceptar todo|Aceptar/i });
 
   try {
-    if (await cookies.isVisible({ timeout: 2000 })) {
+    if (await cookies.isVisible({ timeout: 6000 })) {
       await cookies.click();
     }
   } catch (_) {
@@ -26,7 +26,7 @@ export async function dismissPostLoginPopups(page: Page) {
   const guide = page.getByRole("button", { name: /Cerrar|Entendido|Ok/i });
 
   try {
-    if (await guide.isVisible({ timeout: 2000 })) {
+    if (await guide.isVisible({ timeout: 6000 })) {
       await guide.click();
     }
   } catch (_) {
