@@ -3,7 +3,7 @@ import { LoginPage } from "../Pages/LoginPage";
 import { MainPage } from "../Pages/MainPage";
 import { UserHomePage } from "../Pages/UserHomePage";
 import { getEnv } from "../utils/env";
-import { dismissPostLoginPopups, waitForInboxLoaded } from "../utils/testHelpers";
+import { dismissPostLoginPopups, ensurePostLoginReady, waitForInboxLoaded } from "../utils/testHelpers";
 
 test.describe("Login page test", () =>{
     let login: LoginPage;
@@ -23,8 +23,7 @@ test.describe("Login page test", () =>{
     test("Login valid credentials", async ({ page}) =>{
         await mainPage.clickLogInHeaderLink();
         await login.login(user, pass);
-        await dismissPostLoginPopups(page);
-        await waitForInboxLoaded(page, userHomePage.loc.inboxMainPage);
+        await ensurePostLoginReady(page);   // 👈 solo UNA línea
         await userHomePage.expectInboxMainPage();
     })
     test("Login invalid credentials", async ({ page}) =>{
