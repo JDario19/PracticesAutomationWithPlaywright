@@ -32,8 +32,8 @@ export class UserHomePage {
         await expect(this.loc.inboxMainPage).toBeVisible({ timeout: 5000 });
     }
 
-    async openTaskInfoById(id: string) {
-        const taskContent = this.page
+    async openTaskActionsMenuById(id: string) {
+        const taskContent = this.page // needs refactor
             .locator('.task_content', { hasText: id })
             .first();
 
@@ -45,11 +45,31 @@ export class UserHomePage {
         await infoButton.click();
     }
 
+    async openTaskDetailActionsMenu() {
+        const infoButton = this.loc.infoTaskButton;
+        await expect(infoButton).toBeVisible({ timeout: 5000 });
+        await infoButton.click();
+    }
+
+    async openTaskDetailById(id: string) {
+        const taskContent = this.page // needs refactor
+            .locator('.task_content', { hasText: id })
+            .first();
+
+        await expect(taskContent).toContainText(id);
+        await taskContent.click();
+        const taskDetailHeader = this.page
+            .locator('.task-overview-content-large', { hasText: id });
+        await expect(taskDetailHeader).toBeVisible({
+            timeout: 5000,
+        });
+    }
+
     async deleteTaskById(id: string) {
         await this.loc.deleteTaskButtonTestId.click();
         await this.loc.deleteConfirmButton.click();
         const taskContent = this.page.locator('.task_content', { hasText: id });
-        await expect(taskContent).toHaveCount(0);   // 🎯 VALIDACIÓN FINAL
-    }
+        await expect(taskContent).toHaveCount(0);
+    } 
 }
 
