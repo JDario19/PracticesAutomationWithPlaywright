@@ -16,6 +16,7 @@ test.describe("Adding tasks", () => {
     login = new LoginPage(page);
     mainPage = new MainPage(page);
     await page.goto("/");
+    await page.goto('/', { waitUntil: 'networkidle' });
   });
 
   test.describe("Add & Delete", () => {

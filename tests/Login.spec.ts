@@ -18,6 +18,7 @@ test.describe("Login page test", () =>{
         mainPage = new MainPage(page);
         userHomePage = new UserHomePage(page);
         await page.goto('/')
+        await page.goto('/', { waitUntil: 'networkidle' });
     })
     test("Login valid credentials", async ({ page}) =>{
         await mainPage.clickLogInHeaderLink();
