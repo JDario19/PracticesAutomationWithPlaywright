@@ -3,6 +3,7 @@ import { LoginPage } from "../Pages/LoginPage";
 import { MainPage } from "../Pages/MainPage";
 import { UserHomePage } from "../Pages/UserHomePage";
 import { getEnv } from "../utils/env";
+import { dismissPostLoginPopups, waitForInboxLoaded } from "../utils/testHelpers";
 
 test.describe("Login page test", () =>{
     let login: LoginPage;
@@ -17,12 +18,13 @@ test.describe("Login page test", () =>{
         login = new LoginPage(page);
         mainPage = new MainPage(page);
         userHomePage = new UserHomePage(page);
-        await page.goto('/')
         await page.goto('/', { waitUntil: 'networkidle' });
     })
     test("Login valid credentials", async ({ page}) =>{
         await mainPage.clickLogInHeaderLink();
         await login.login(user, pass);
+        await dismissPostLoginPopups(page);
+        await waitForInboxLoaded(page, userHomePage.loc.inboxMainPage);
         await userHomePage.expectInboxMainPage();
     })
     test("Login invalid credentials", async ({ page}) =>{

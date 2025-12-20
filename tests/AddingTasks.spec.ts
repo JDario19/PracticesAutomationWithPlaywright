@@ -3,6 +3,7 @@ import { test, expect } from "@playwright/test";
 import { LoginPage } from "../Pages/LoginPage";
 import { MainPage } from "../Pages/MainPage";
 import { getEnv } from "../utils/env";
+import { dismissPostLoginPopups, waitForInboxLoaded } from "../utils/testHelpers";
 
 test.describe("Adding tasks", () => {
   let userHomePage: UserHomePage;
@@ -27,6 +28,8 @@ test.describe("Adding tasks", () => {
 
       await mainPage.clickLogInHeaderLink();
       await login.login(user, pass);
+      await dismissPostLoginPopups(page);
+      await waitForInboxLoaded(page, userHomePage.loc.inboxMainPage);
       await userHomePage.addTask(taskName, taskDescription);
 
       const idLocator = page.getByText(id).first();
