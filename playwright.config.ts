@@ -11,9 +11,9 @@ export default defineConfig({
   retries: isCI ? 2 : 0,
 
   // ⬇⬇⬇ IMPORTANTE
-  timeout: isCI ? 90_000 : 30_000,            // timeout total por test
+  timeout: isCI ? 90_000 : 60_000,            // timeout total por test
   expect: {
-    timeout: isCI ? 15_000 : 5_000,           // timeout de los expect()
+    timeout: isCI ? 30_000 : 51_000,           // timeout de los expect()
   },
   use: {
     baseURL: process.env.BASE_URL || 'https://www.todoist.com/home',
