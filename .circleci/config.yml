@@ -4,18 +4,10 @@ jobs:
   test:
     docker:
       - image: cimg/node:20.11
-    parallelism: 3
     working_directory: ~/project
-    environment:
-      DOTENV_DISABLE: "true"        # 👈 1) Desactiva dotenv en CI
+
     steps:
       - checkout
-
-      - run:
-          name: Debug env vars
-          command: |
-            echo "QA_USER: $QA_USER"
-            echo "QA_PASS: $QA_PASS"
 
       - run:
           name: Debug tree
@@ -28,9 +20,11 @@ jobs:
           keys:
             - v1-npm-deps-{{ checksum "package-lock.json" }}
             - v1-npm-deps-
+
       - run:
           name: Install deps
           command: npm ci
+
       - save_cache:
           key: v1-npm-deps-{{ checksum "package-lock.json" }}
           paths:
@@ -40,70 +34,33 @@ jobs:
       - run:
           name: Install Playwright browsers
           command: npx playwright install --with-deps
+
       - run:
-          name: Run shard
+          name: Run Playwright tests (capture exit code)
           command: |
-            SHARD_INDEX=$((CIRCLE_NODE_INDEX + 1))
-            TOTAL=$CIRCLE_NODE_TOTAL
-            echo "Running shard $SHARD_INDEX/$TOTAL"
-            npx playwright test --shard="$SHARD_INDEX/$TOTAL"
+            set +e
+            npx playwright test
+            EXIT_CODE=$?
+            echo $EXIT_CODE > /tmp/pw_exit_code
+            set -e
 
       - store_test_results:
           path: test-results/junit
-
-      - run:
-          name: Prepare blob for merge
-          command: |
-            mkdir -p /tmp/blob-report/${CIRCLE_NODE_INDEX}
-            [ -d blob-report ] && mv blob-report/* /tmp/blob-report/${CIRCLE_NODE_INDEX}/ || true
-
-      - persist_to_workspace:
-          root: /tmp
-          paths: [ blob-report ]
-
-  merge_report:
-    docker:
-      - image: cimg/node:20.11
-    working_directory: ~/project
-    environment:
-      DOTENV_DISABLE: "true"        # 👈 opcional pero consistente
-    steps:
-      - checkout
-      - attach_workspace: { at: /tmp }
-
-      - restore_cache:
-          keys:
-            - v1-npm-deps-{{ checksum "package-lock.json" }}
-            - v1-npm-deps-
-      - run:
-          name: Install deps
-          command: npm ci
-      - run:
-          name: Install Playwright browsers
-          command: npx playwright install --with-deps
-      - run:
-          name: Merge Playwright reports
-          command: |
-            mkdir -p /tmp/merged-blobs
-            find /tmp/blob-report -maxdepth 2 -type f -name "*.zip" -print -exec mv -t /tmp/merged-blobs {} +
-
-            echo "Contenido de /tmp/merged-blobs:"
-            ls -la /tmp/merged-blobs || true
-            if [ -z "$(ls -A /tmp/merged-blobs 2>/dev/null)" ]; then
-              echo "No se encontraron blobs (¿se ejecutó el reporter 'blob' en los shards?)."
-              exit 1
-            fi
-
-            npx playwright merge-reports --reporter html /tmp/merged-blobs
 
       - store_artifacts:
           path: playwright-report
           destination: playwright-report
 
+      - run:
+          name: Fail job if tests failed
+          command: |
+            EXIT_CODE=$(cat /tmp/pw_exit_code)
+            if [ "$EXIT_CODE" -ne 0 ]; then
+              echo "Playwright tests failed with exit code $EXIT_CODE"
+              exit $EXIT_CODE
+            fi
+
 workflows:
   test_on_push:
     jobs:
       - test
-      - merge_report:
-          requires:
-            - test

@@ -11,16 +11,16 @@ export default defineConfig({
   reporter: process.env.CI
     ? [
         ['junit', { outputFile: 'test-results/junit/results.xml' }],
-        ['blob', { outputDir: 'blob-report' }],  // 👈 explícito para CircleCI
+        ['html', { outputFolder: 'playwright-report', open: 'never' }],
         ['line'],
       ]
     : [
-        ['html', { open: 'on-failure' }],        // 👈 UI local con npx playwright show-report
+        ['html', { open: 'on-failure' }],
       ],
 
   use: {
     baseURL: process.env.BASE_URL || 'https://www.todoist.com/home',
-    trace: 'on-first-retry',          // 👈 esto activa Trace Viewer en el HTML
+    trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
   },
