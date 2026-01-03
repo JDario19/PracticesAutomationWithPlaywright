@@ -10,11 +10,17 @@ jobs:
       - checkout
 
       - run:
-          name: Debug tree
+          name: Verify required env vars
           command: |
-            pwd; node -v; npm -v
-            ls -la
-            test -f package.json && echo "package.json OK" || (echo "NO package.json" && exit 1)
+            node -e "
+              const vars = ['QA_USER','QA_PASS','QA_WRONGPASS'];
+              const missing = vars.filter(v => !process.env[v]);
+              if (missing.length) {
+                console.error('Missing env vars:', missing.join(', '));
+                process.exit(1);
+              }
+              console.log('Env vars OK');
+            "
 
       - restore_cache:
           keys:
@@ -51,16 +57,19 @@ jobs:
           path: playwright-report
           destination: playwright-report
 
+      - store_artifacts:
+          path: test-results
+          destination: test-results
+
       - run:
           name: Fail job if tests failed
           command: |
             EXIT_CODE=$(cat /tmp/pw_exit_code)
             if [ "$EXIT_CODE" -ne 0 ]; then
-              echo "Playwright tests failed with exit code $EXIT_CODE"
               exit $EXIT_CODE
             fi
 
 workflows:
-  test_on_push:
+  test_on_pr:
     jobs:
       - test
