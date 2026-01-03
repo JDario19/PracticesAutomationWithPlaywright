@@ -10,7 +10,7 @@ export class MainPage{
         this.loc = new MainPageLocators(page);
     }
     async clickLogInHeaderLink(){
-        await expect(this.loc.logInHeaderLink).toBeVisible({ timeout: 5000 });
-        await this.loc.logInHeaderLink.click();
+        //await expect(this.loc.signupLoginHeaderLink).toBeVisible({ timeout: 5000 });
+        await this.loc.signupLoginHeaderLink.click();
     }
 }

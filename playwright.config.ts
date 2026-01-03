@@ -16,7 +16,7 @@ export default defineConfig({
     timeout: isCI ? 30_000 : 51_000,           // timeout de los expect()
   },
   use: {
-    baseURL: process.env.BASE_URL || 'https://www.todoist.com/home',
+    baseURL: process.env.BASE_URL || 'https://automationexercise.com/',
 
     navigationTimeout: isCI ? 60_000 : 30_000,
     actionTimeout: isCI ? 30_000 : 0,         // 0 = usar default local
