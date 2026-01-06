@@ -13,13 +13,13 @@ export class LoginPageLocators{
 
     constructor(page: Page){
         this.page  = page;
-        this.loginEmail = page.getByRole('textbox', {name: "email"});
-        this.loginPassword = page.getByRole('textbox', {name: "Password"});
+        this.loginEmail = page.locator('[data-qa="login-email"]'); //due to the app implementation, needs to be by locator
+        this.loginPassword = page.locator('[data-qa="login-password"]');//due to the app implementation, needs to be by locator  
         this.SignupName= page.locator('[data-qa="signup-name"]'); //due to the app implementation, needs to be by locator
         this.SignupEmail = page.locator('[data-qa="signup-email"]');//due to the app implementation, needs to be by locator
-        this.loginButton = page.getByRole('button', {name: 'Log in'});//due to the app implementation, needs to be by locator
-        this.signupButton = page.locator('[data-qa="signup-button"]');
-        this.errorLoginMessage = page.getByText("Wrong email or password.");
+        this.loginButton = page.getByRole('button', {name: 'Login'});
+        this.signupButton = page.locator('[data-qa="signup-button"]');//due to the app implementation, needs to be by locator
+        this.errorLoginMessage = page.getByText("Your email or password is incorrect!");
         this.errorsignupMessage = page.getByText("Email Address already exist!");
     }
 }

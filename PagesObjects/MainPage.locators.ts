@@ -7,5 +7,6 @@ export class MainPageLocators{
     constructor(page: Page){
         this.page = page;
         this.signupLoginHeaderLink = page.getByText('Signup / Login');
+        
     }
 }

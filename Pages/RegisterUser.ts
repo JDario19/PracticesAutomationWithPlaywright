@@ -1,11 +1,8 @@
 import { Page } from "@playwright/test";
-import { RegisterUserLocators } from "../PagesObjects/Registeruser.locators";
+import { RegisterUserLocators } from "../PagesObjects/RegisterUser.locators";
 import { title } from "process";
 
 export class RegisterUser{
-    fillRegistrationForm(arg0: string, arg1: string, arg2: string, arg3: string, arg4: string, arg5: string, arg6: string, arg7: string, arg8: string, arg9: string, arg10: string, arg11: string, arg12: string, arg13: string, arg14: string, arg15: string, arg16: string) {
-      throw new Error("Method not implemented.");
-    }
     readonly page: Page;
     readonly loc: RegisterUserLocators;
 
