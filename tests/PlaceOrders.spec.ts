@@ -14,4 +14,4 @@ test.describe("Place orders test", () =>{
     test("Place an order as a registered user", async ({page}) =>{
 
     });
-});
+}); 
