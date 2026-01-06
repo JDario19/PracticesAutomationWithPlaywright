@@ -10,7 +10,7 @@ export class LoginPage{
         this.loc = new LoginPageLocators(page);
     }
     async login(email: string, password: string){
-        await this.loc.loginButton.fill(email)
+        await this.loc.loginEmail.fill(email)
         await this.loc.loginPassword.fill(password)
         await this.loc.loginButton.click(); 
     }
