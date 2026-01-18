@@ -1,6 +1,5 @@
 import { Page } from "@playwright/test";
 import { RegisterUserLocators } from "../PagesObjects/RegisterUser.locators";
-import { title } from "process";
 
 export class RegisterUser{
     readonly page: Page;
@@ -31,5 +30,9 @@ export class RegisterUser{
         await this.loc.accountCreatedMessage.waitFor({ state: 'visible' });
         await this.loc.congratulationsMessage.waitFor({ state: 'visible' });
         await this.loc.explanationMessage.waitFor({ state: 'visible' });
+    }
+
+    async continueAfterRegistration() {
+        await this.loc.continueButton.click();
     }
 }
