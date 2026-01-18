@@ -25,6 +25,7 @@ export class RegisterUserLocators{
     readonly accountCreatedMessage: Locator;
     readonly congratulationsMessage: Locator;
     readonly explanationMessage: Locator;
+    readonly continueButton: Locator;
 
 
 
@@ -51,5 +52,7 @@ export class RegisterUserLocators{
         this.accountCreatedMessage = page.getByText("Account Created!");
         this.congratulationsMessage = page.getByText("Congratulations! Your new account has been successfully created!");
         this.explanationMessage = page.getByText("You can now take advantage of member privileges to enhance your online shopping experience with us.");
+        this.continueButton = page.getByRole('link', {name: 'Continue'});
+        //data-qa="continue-button"
     }
 }
